@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const cors = require("cors");
 const { NODE_ENV } = require("./config");
+const ArticlesService = require("./articles-service");
 
 // create Express app
 const app = express();
@@ -15,6 +16,15 @@ app.use(morgan(morganOption));
 // hide sensitive data with 'helmet' and allow cors
 app.use(helmet());
 app.use(cors());
+
+app.get("/articles", (req, res, next) => {
+  const knexInstance = req.app.get("db");
+  ArticlesService.getAllArticles(knexInstance)
+    .then(articles => {
+      res.json(articles);
+    })
+    .catch(next);
+});
 
 // basic endpoint for app.js
 app.get("/", (req, res) => {
