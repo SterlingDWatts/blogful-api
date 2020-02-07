@@ -48,7 +48,7 @@ describe.only("Articles Endpoints", function() {
       it(`responds with 404`, () => {
         const articleId = 123456;
         return supertest(app)
-          .get(`/aricles/${articleId}`)
+          .get(`/articles/${articleId}`)
           .expect(404, { error: { message: `Article doesn't exist` } });
       });
     });
