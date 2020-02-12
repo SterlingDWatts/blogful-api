@@ -9,6 +9,9 @@ const ArticlesService = require("./articles-service");
 // create Express app
 const app = express();
 
+// use Express to parse Json
+const jsonParser = express.json();
+
 // log 'tiny' output if in production, else log 'common'
 const morganOption = NODE_ENV === "production" ? "tiny" : "common";
 app.use(morgan(morganOption));
@@ -34,8 +37,11 @@ app.get("/articles", (req, res, next) => {
     .catch(next);
 });
 
-app.post("/articles", (req, res, next) => {
-  res.status(201).send("stuff");
+app.post("/articles", jsonParser, (req, res, next) => {
+  res.status(201).json({
+    ...req.body,
+    id: 12
+  });
 });
 
 app.get("/articles/:article_id", (req, res, next) => {
