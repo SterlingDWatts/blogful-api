@@ -86,6 +86,10 @@ describe("Articles Endpoints", function() {
           expect(res.body.style).to.eql(newArticle.style);
           expect(res.body.content).to.eql(newArticle.content);
           expect(res.body).to.have.property("id");
+          expect(res.headers.location).to.eql(`/articles/${res.body.id}`);
+          const expected = new Date().toLocaleString("en", { timeZone: "UTC" });
+          const actual = new Date(res.body.date_published).toLocaleString();
+          expect(actual).to.eql(expected);
         })
         .then(postRes =>
           supertest(app)
