@@ -34,6 +34,10 @@ app.get("/articles", (req, res, next) => {
     .catch(next);
 });
 
+app.post("/articles", (req, res, next) => {
+  res.status(201).send("stuff");
+});
+
 app.get("/articles/:article_id", (req, res, next) => {
   const knexInstance = req.app.get("db");
   ArticlesService.getById(knexInstance, req.params.article_id)

@@ -3,7 +3,7 @@ const knex = require("knex");
 const app = require("../src/app");
 const { makeArticlesArray } = require("./articles.fixtures");
 
-describe.only("Articles Endpoints", function() {
+describe("Articles Endpoints", function() {
   let db;
 
   before("make knex instance", () => {
@@ -35,7 +35,7 @@ describe.only("Articles Endpoints", function() {
         return db.into("blogful_articles").insert(testArticles);
       });
 
-      it("GET /articles responds with 200 and all of the articles", () => {
+      it("responds with 200 and all of the articles", () => {
         return supertest(app)
           .get("/articles")
           .expect(200, testArticles);
@@ -67,6 +67,19 @@ describe.only("Articles Endpoints", function() {
           .get(`/articles/${articleId}`)
           .expect(200, expectedArticle);
       });
+    });
+  });
+
+  describe.only("Post /articles", () => {
+    it("creates an article, responding with 201 and the next article", function() {
+      return supertest(app)
+        .post("/articles")
+        .send({
+          title: "Test new article",
+          style: "Listicle",
+          content: "Test new article content..."
+        })
+        .expect(201);
     });
   });
 });
