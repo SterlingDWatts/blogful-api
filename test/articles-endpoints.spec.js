@@ -43,7 +43,7 @@ describe("Articles Endpoints", function() {
     });
   });
 
-  describe(`Get /articles/:aricle_id`, () => {
+  describe(`Get /articles/:article_id`, () => {
     context(`Given no articles`, () => {
       it(`responds with 404`, () => {
         const articleId = 123456;
@@ -70,8 +70,9 @@ describe("Articles Endpoints", function() {
     });
   });
 
-  describe.only("Post /articles", () => {
+  describe("Post /articles", () => {
     it("creates an article, responding with 201 and the next article", function() {
+      this.retries(3);
       const newArticle = {
         title: "Test new article",
         style: "Listicle",
