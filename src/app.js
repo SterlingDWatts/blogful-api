@@ -38,10 +38,13 @@ app.get("/articles", (req, res, next) => {
 });
 
 app.post("/articles", jsonParser, (req, res, next) => {
-  res.status(201).json({
-    ...req.body,
-    id: 12
-  });
+  const { title, content, style } = req.body;
+  const newArticle = { title, content, style };
+  ArticlesService.insertArticle(req.app.get("db"), newArticle)
+    .then(article => {
+      res.status(201).json(article);
+    })
+    .catch(next);
 });
 
 app.get("/articles/:article_id", (req, res, next) => {
