@@ -1,4 +1,3 @@
-const { expect } = require("chai");
 const knex = require("knex");
 const app = require("../src/app");
 const { makeArticlesArray } = require("./articles.fixtures");
@@ -32,7 +31,16 @@ describe("Articles Endpoints", function() {
       const testArticles = makeArticlesArray();
 
       beforeEach("insert articles", () => {
-        return db.into("blogful_articles").insert(testArticles);
+        const testArticlesCorrectDate = testArticles.slice().map(article => {
+          return {
+            id: article.id,
+            title: article.title,
+            style: article.style,
+            content: article.content,
+            date_published: new Date(article.date_published)
+          };
+        });
+        return db.into("blogful_articles").insert(testArticlesCorrectDate);
       });
 
       it("responds with 200 and all of the articles", () => {
@@ -57,7 +65,16 @@ describe("Articles Endpoints", function() {
       const testArticles = makeArticlesArray();
 
       beforeEach("insert articles", () => {
-        return db.into("blogful_articles").insert(testArticles);
+        const testArticlesCorrectDate = testArticles.slice().map(article => {
+          return {
+            id: article.id,
+            title: article.title,
+            style: article.style,
+            content: article.content,
+            date_published: new Date(article.date_published)
+          };
+        });
+        return db.into("blogful_articles").insert(testArticlesCorrectDate);
       });
 
       it("GET /article/:article_id responds with 200 and the specified article", () => {
@@ -68,9 +85,36 @@ describe("Articles Endpoints", function() {
           .expect(200, expectedArticle);
       });
     });
+
+    context("Given an XSS attch article", () => {
+      const maliciousArticle = {
+        id: 911,
+        title: 'Naughty naughty very naughty <script>alert("xss");</script>',
+        style: "How-to",
+        content: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
+      };
+
+      beforeEach("insert malicious article", () => {
+        return db.into("blogful_articles").insert([maliciousArticle]);
+      });
+
+      it("removes XSS attack content", () => {
+        return supertest(app)
+          .get(`/articles/${maliciousArticle.id}`)
+          .expect(200)
+          .expect(res => {
+            expect(res.body.title).to.eql(
+              'Naughty naughty very naughty &lt;script&gt;alert("xss");&lt;/script&gt;'
+            );
+            expect(res.body.content).to.eql(
+              `Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`
+            );
+          });
+      });
+    });
   });
 
-  describe.only("Post /articles", () => {
+  describe("Post /articles", () => {
     it("creates an article, responding with 201 and the next article", function() {
       this.retries(3);
       const newArticle = {
