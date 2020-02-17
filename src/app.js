@@ -24,11 +24,6 @@ app.get("/", (req, res) => {
   res.send("Hello, world!");
 });
 
-app.get("/xss", (req, res) => {
-  res.cookie("secretToken", "1234567890");
-  res.sendFile(__dirname + "/xss-example.html");
-});
-
 // error handling middleware gives short response if in production
 app.use(function errorHandler(error, req, res, next) {
   let response;
