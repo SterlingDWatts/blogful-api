@@ -1,6 +1,9 @@
 const knex = require("knex");
 const app = require("../src/app");
-const { makeArticlesArray } = require("./articles.fixtures");
+const {
+  makeArticlesArray,
+  makeMaliciousArticle
+} = require("./articles.fixtures");
 
 describe("Articles Endpoints", function() {
   let db;
@@ -27,6 +30,7 @@ describe("Articles Endpoints", function() {
           .expect(200, []);
       });
     });
+
     context("Given there are articles in the database", () => {
       const testArticles = makeArticlesArray();
 
@@ -47,6 +51,23 @@ describe("Articles Endpoints", function() {
         return supertest(app)
           .get("/articles")
           .expect(200, testArticles);
+      });
+    });
+    context("Given an xss attack article", () => {
+      const { maliciousArticle, expectedArticle } = makeMaliciousArticle();
+
+      beforeEach("insert malicious article", () => {
+        return db.into("blogful_articles").insert([maliciousArticle]);
+      });
+
+      it("removes XSS attack content", () => {
+        return supertest(app)
+          .get(`/articles`)
+          .expect(200)
+          .expect(res => {
+            expect(res.body[0].title).to.eql(expectedArticle.title);
+            expect(res.body[0].content).to.eql(expectedArticle.content);
+          });
       });
     });
   });
@@ -77,7 +98,7 @@ describe("Articles Endpoints", function() {
         return db.into("blogful_articles").insert(testArticlesCorrectDate);
       });
 
-      it("GET /article/:article_id responds with 200 and the specified article", () => {
+      it("responds with 200 and the specified article", () => {
         const articleId = 2;
         const expectedArticle = testArticles[articleId - 1];
         return supertest(app)
@@ -86,13 +107,8 @@ describe("Articles Endpoints", function() {
       });
     });
 
-    context("Given an XSS attch article", () => {
-      const maliciousArticle = {
-        id: 911,
-        title: 'Naughty naughty very naughty <script>alert("xss");</script>',
-        style: "How-to",
-        content: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
-      };
+    context("Given an XSS attack article", () => {
+      const { maliciousArticle, expectedArticle } = makeMaliciousArticle();
 
       beforeEach("insert malicious article", () => {
         return db.into("blogful_articles").insert([maliciousArticle]);
@@ -103,12 +119,8 @@ describe("Articles Endpoints", function() {
           .get(`/articles/${maliciousArticle.id}`)
           .expect(200)
           .expect(res => {
-            expect(res.body.title).to.eql(
-              'Naughty naughty very naughty &lt;script&gt;alert("xss");&lt;/script&gt;'
-            );
-            expect(res.body.content).to.eql(
-              `Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`
-            );
+            expect(res.body.title).to.eql(expectedArticle.title);
+            expect(res.body.content).to.eql(expectedArticle.content);
           });
       });
     });
@@ -136,10 +148,10 @@ describe("Articles Endpoints", function() {
           const actual = new Date(res.body.date_published).toLocaleString();
           expect(actual).to.eql(expected);
         })
-        .then(postRes =>
+        .then(res =>
           supertest(app)
-            .get(`/articles/${postRes.body.id}`)
-            .expect(postRes.body)
+            .get(`/articles/${res.body.id}`)
+            .expect(res.body)
         );
     });
 
@@ -162,6 +174,18 @@ describe("Articles Endpoints", function() {
             error: { message: `Missing '${field}' in request body` }
           });
       });
+    });
+
+    it("removes XSS attack content from response", () => {
+      const { maliciousArticle, expectedArticle } = makeMaliciousArticle();
+      return supertest(app)
+        .post(`/articles`)
+        .send(maliciousArticle)
+        .expect(201)
+        .expect(res => {
+          expect(res.body.title).to.eql(expectedArticle.title);
+          expect(res.body.content).to.eql(expectedArticle.content);
+        });
     });
   });
 });
