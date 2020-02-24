@@ -5,6 +5,7 @@ const helmet = require("helmet");
 const cors = require("cors");
 const articlesRouter = require("./articles/articles-router");
 const usersRouter = require("./users/users-router");
+const commentsRouter = require("./comments/comments-router");
 const { NODE_ENV } = require("./config");
 
 // create Express app
@@ -20,6 +21,7 @@ app.use(cors());
 
 app.use("/api/articles", articlesRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/comments", commentsRouter);
 
 // basic endpoint for app.js
 app.get("/", (req, res) => {
